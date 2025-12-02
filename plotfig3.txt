@@ -1,0 +1,58 @@
+
+set encoding utf8
+set term pdfcairo font "TeX Gyre Pagella,18"
+# set term pdfcairo font "Numbus Roman,18"
+set output "sigmaZtemp.pdf"
+set ytics 0.2
+set key spacing 1.5
+set xlabel "B/D_z"
+set ylabel "Σ_z" 
+set key bottom right 
+set palette defined ( 0 "blue", 3 "#00AA00", 6 "orange", 9 "red" )
+unset colorbox
+N=9.
+
+Dz=1
+E=0
+Di(B,Dz,E)=(3*B*B+Dz*Dz+3.*E*E)**3 - (Dz**3-9*Dz*E*E)**2
+q(Dz,E) = Dz**3-9*Dz*E*E
+I={0.,1.}
+w=exp(2*pi*I/3.)
+u2(B,Dz,E) = ((-q(Dz,E)+I*sqrt(Di(B,Dz,E)))**(1./3.)+(-q(Dz,E)-I*sqrt(Di(B,Dz,E)))**(1./3.))/3.
+u1(B,Dz,E) = (w**2*(-q(Dz,E)+I*sqrt(Di(B,Dz,E)))**(1./3.)+w*(-q(Dz,E)-I*sqrt(Di(B,Dz,E)))**(1./3.))/3.
+u0(B,Dz,E) = (w*(-q(Dz,E)+I*sqrt(Di(B,Dz,E)))**(1./3.)+w**2*(-q(Dz,E)-I*sqrt(Di(B,Dz,E)))**(1./3.))/3.
+
+
+l2(B,Dz,E) = u2(B,Dz,E) + 4.*B**4*(Dz*Dz+3.*E*E)*u2(B,Dz,E)/(15*(u1(B,Dz,E)-u2(B,Dz,E))**3*((u0(B,Dz,E)-u2(B,Dz,E)))**3)
+l1(B,Dz,E) = u1(B,Dz,E) + 4.*B**4*(Dz*Dz+3.*E*E)*u1(B,Dz,E)/(15*(u2(B,Dz,E)-u1(B,Dz,E))**3*((u0(B,Dz,E)-u1(B,Dz,E)))**3)
+l0(B,Dz,E) = u0(B,Dz,E) + 4.*B**4*(Dz*Dz+3.*E*E)*u0(B,Dz,E)/(15*(u1(B,Dz,E)-u0(B,Dz,E))**3*((u2(B,Dz,E)-u0(B,Dz,E)))**3)
+
+
+PsiZ0(x)= 1./(1.+(1./(Dz*Dz)+3.*E*E/(Dz*Dz*Dz*Dz))*x*x/(1.+(0.24/(Dz*Dz)+1.6*E*E/(Dz*Dz*Dz*Dz))*x*x/(1.+(0.6/(Dz)+2.2*E*E/(Dz*Dz*Dz))*abs(x))))
+PsiZ2(x)=1./(1.+(1./(Dz+E)**2)*x*x/(1.+(0.8/(Dz+E)**2)*x*x/(1.+(1/Dz)*abs(x))))
+
+Sigma0Z(x) = (1 - PsiZ0(x))*(2./3.)
+Sigma2Z(x) = (2 + PsiZ2(x))*(1./3.)
+Sigma1Z(x) = (2 - Sigma0Z(x) - Sigma2Z(x))
+
+
+p0(B, T) = exp(-l0(B, Dz, E)/T) / (exp(-l0(B, Dz, E)/T)+exp(-l1(B, Dz, E)/T)+exp(-l2(B, Dz, E)/T))
+p1(B, T) = exp(-l1(B, Dz, E)/T) / (exp(-l0(B, Dz, E)/T)+exp(-l1(B, Dz, E)/T)+exp(-l2(B, Dz, E)/T))
+p2(B, T) = exp(-l2(B, Dz, E)/T) / (exp(-l0(B, Dz, E)/T)+exp(-l1(B, Dz, E)/T)+exp(-l2(B, Dz, E)/T))
+PLtemp(B, T) = p0(B,T) * Sigma0Z(B) + p1(B,T) * Sigma1Z(B) + p2(B,T) * Sigma2Z(B) 
+
+# g++ -I/home/alexei/Cprograms/phys/espin magpldc.cc -O3 -o mpldc
+
+N=13
+plot [:5][:0.67] '<./mpldc 0.1 1' us 1:($2) w l lw 1 pal frac 0./N title "T / D = 0.1", \
+	PLtemp(x, 0.1 ) w l lw 1 dt 2 pal frac 1./N notitle, \
+	'<./mpldc 0.3 1' us 1:($2) w l lw 1 pal frac 3./N title "T / D = 0.3", \
+	PLtemp(x, 0.3 ) w l dt 2 pal frac 4./N notitle, \
+	'<./mpldc 0.5 1' us 1:($2) w l lw 1 pal frac 6./N title "T / D = 0.5", \
+	PLtemp(x, 0.5 ) w l dt 2 pal frac 7./N notitle, \
+	'<./mpldc 0.8 1' us 1:($2) w l lw 1 pal frac 9./N title "T / D = 0.8", \
+	PLtemp(x, 0.8 ) w l dt 2 pal frac 10./N notitle, \
+	'<./mpldc 1.5 1' us 1:($2) w l lw 1 pal frac 12./N title "T / D = 1", \
+	PLtemp(x, 1.5 ) w l dt 2 pal frac 13./N notitle 
+
+

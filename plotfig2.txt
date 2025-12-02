@@ -1,0 +1,30 @@
+
+
+
+set encoding utf8
+set term pdfcairo font "TeX Gyre Pagella,18"
+set output "psiXY03.pdf"
+
+set key spacing 1.5
+set xlabel "B/D_z"
+Dz=1
+E=0.1
+G(x)=c0*x*x/((1.+d0*x)*(1+d1*x*x))
+c0=4*Dz*E/(3*(Dz*Dz-E*E)**2) / (E/Dz)
+d0=6./(5. * Dz)
+d1=25*Dz*Dz/(18*(Dz*Dz-E*E)**2)
+P2(x)=1./(1.+b1*x*x/(1.+b2*x*x/(1.+b3*abs(x))))
+b1=1./(6.*E*E)+1./(Dz*Dz)
+b2=0.28/(E*E) - 1.23/(Dz*Dz)
+b3=2.1/E-13.5*E/(Dz*Dz)
+
+
+plot 'avD1E0p1.dat' us 1:( -$8 * 10) w l lc "dark-green" title "(D_z/E) Σ_{xy,0}   MC", \
+     '<./tiso.py -E 0.1' us 1:(-$8 * 10) w l lc rgb "#8060ff" lw 3 dt 2 title "(D_z/E) Σ_{xy,0}   Theory", \
+	  G(x) w l lw 2 dt 3 lc rgb "navy" title "(D_z/E) Σ_{xy,0}   Padé", \
+     'avD1E0p1.dat' us 1:( $10 ) w l lc rgb "red" title "Σ_{xy,2}   MC", \
+     '<./tiso.py -E 0.1' us 1:($10) w l lc rgb "orange" lw 3 dt 2 title "Σ_{xy,2}   Theory", \
+     P2(x) w l lw 2 dt 3 lc rgb "#EE5555" title "Σ_{xy,2}   Padé" 
+
+
+
